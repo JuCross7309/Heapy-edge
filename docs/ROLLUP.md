@@ -1,7 +1,7 @@
 # HEAPY Edge — project rollup for a new collaborator
 
 Written 2026-10-16 by Justin Cross's Claude session. Give this to anyone (person or Claude session)
-who will work on HEAPY Edge. It assumes you have the same `Data Collection QC` folder and the
+who will work on HEAPY Edge. It assumes you have the same OneDrive folder `Tools and Concepts\HEAPY Atlas & Edge Platform\Edge` and the
 `DYS3D/Heapy-edge` repository.
 
 ## What it is
@@ -21,7 +21,7 @@ passwords and keys never shown again once saved.
 | Thing | Where |
 |---|---|
 | Repository | `https://github.com/DYS3D/Heapy-edge` (public, main branch) |
-| Working copy | `Data Collection QC\HEAPYEdge` (OneDrive, Justin's PC) |
+| Working copy | `Tools and Concepts\HEAPY Atlas & Edge Platform\Edge\HEAPYEdge` (OneDrive, Justin's PC; moved here 2026-10-16) |
 | Project plan (HEAPY-branded HTML) | `docs/HEAPY Edge - Project Plan.html` in the repo; same file in the Claude project as `claude/HEAPY Edge - Project Plan.html`; live artifact https://claude.ai/artifact/Rmd2k4udnhAkmzicPkvFjd — **update all three on every phase change** |
 | Client-facing security sheet | `docs/HEAPY Edge - Security Sheet.html`; artifact https://claude.ai/artifact/L218hUxtHaSEB2wkkuB3Qf |
 | Status note (Claude project) | `claude/heapy-edge-status.md` — the running log of decisions, results and what's next |
@@ -113,7 +113,7 @@ Phases: 0 design, 1 core + BACnet/IP, 5 MS/TP + Modbus, 6 Niagara/Haystack/SNMP 
   handed on through artifacts; results on the `soak-results` branch).
 - **Git**: commit as `Justin Cross <jrcross@heapy.com>`; push with the fine-grained token
   (Contents, Workflows, Actions: read and write) via `~/mnt/.heapy/git-push.sh`. From a Claude
-  cloud session the route is: `git bundle` → copy into `Data Collection QC` (never into `.git`) →
+  cloud session the route is: `git bundle` → copy into the `Edge` folder (never into `.git`) →
   `git fetch ../x.bundle main:refs/heads/incoming` → `git merge --ff-only incoming` → push. OneDrive
   leaves stale lock files; clear with `find .git -name "*.lock" -delete; find .git/objects -name "tmp_obj_*" -delete`.
 - **Conventions**: HEAPY-branded HTML for anything Justin reads (brand layer is inlined in the plan);
