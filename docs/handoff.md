@@ -25,7 +25,8 @@ same plan plus `claude/heapy-edge-status.md`.
   (`<driver>/state.json` with `pass`, `<driver>/soak.log`) and to artifacts. The repository
   is public, so Actions minutes are unlimited.
 - Next: Phase 2 (central intake in Trend Tracker) — needs the central server decision.
-  Then bench kit, LON/ARCNET decision, pilot site.
+  Then bench kit and pilot site. LON/ARCNET decided 2026-10-16: read through site gateways;
+  direct support only if a real site has a bare LON or ARCNET trunk.
 
 ## Running the lab on a PC (WSL2 Ubuntu, as root)
 
@@ -68,8 +69,7 @@ Workflows, Actions: read and write).
 
 ## Open items (need Justin)
 
-1. Central server host/owner — blocks Phase 2, which is next.
-2. LON and ARCNET: read through what the site has (JACE, iLON/SmartServer, BACnet router) vs
-   direct hardware support built when a site needs it.
-3. Bench kit parts list, then every driver against real equipment before the pilot.
-4. Pilot site, and HEAPY IT review of the security sheet.
+1. Central server host/owner — blocks Phase 2, which is next. Phase 2 is paused (2026-10-04)
+   until Justin's Trend Tracker (now HEAPY Atlas) change lands; build it as a separate module on a branch.
+2. Bench kit parts list, then every driver against real equipment before the pilot.
+3. Pilot site, and HEAPY IT review of the security sheet.

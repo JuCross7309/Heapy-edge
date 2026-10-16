@@ -481,7 +481,6 @@ body{background:var(--hp-bg);color:var(--hp-text);margin:0}
 
   <div class="sec-h" style="margin-top:0"><span class="hp-eyebrow">Open items</span><h2>Needs input</h2></div>
   <ol class="open">
-    <li><b>LON and ARCNET:</b> neither can be simulated on a plain computer. Proposal: read them through what the site already has (a JACE, an iLON / SmartServer, or a BACnet router) and only build direct LON (USB interface) or ARCNET (card) support when a real site needs it, tested on the bench kit.</li>
     <li><b>Bench kit:</b> parts list to follow (Pi 5, x86 mini-PC, USB RS-485 adapters, one MS/TP controller, one Modbus meter, a small UPS with SNMP card) so every driver is proven on real hardware before the pilot.</li>
     <li><b>Name:</b> "HEAPY Edge" is a working name. Keep it or pick another before Phase 1 (it shows on the box, the installer and in Trend Tracker).</li>
     <li><b>Central server:</b> where it's hosted (Azure or AWS, or a HEAPY office server) and who owns it. This is the same open item as Trend Tracker Phase 6, and Phase 2 here needs it.</li>
@@ -552,6 +551,7 @@ body{background:var(--hp-bg);color:var(--hp-text);margin:0}
       <tr><td class="k">Storage on the box</td><td>SQLite buffer that keeps readings until the server confirms it has them, plus a rolling 30 days (setting) for re-sends. A 256 GB SSD holds years of one site's data. Pi boxes boot from SSD, not an SD card.</td></tr>
       <tr><td class="k">Polling</td><td>Default 15 minutes per point (matches Novant), 1–5 minutes for chosen points, and change-of-value subscriptions where the device supports them. Batched reads (ReadPropertyMultiple) to keep traffic low.</td></tr>
       <tr><td class="k">Security</td><td>Each box is paired with a one-time code and gets its own key. The server can revoke it. TLS on every upload. Updates are signed, and the box checks the signature before installing. The local setup page is on the box's own network only, behind a password.</td></tr>
+      <tr><td class="k">LON and ARCNET</td><td>Read through the site's existing gateway (JACE, iLON / SmartServer, BACnet router) with the drivers already built (decided 2026-10-16). Direct hardware support only if a real site has a bare LON or ARCNET trunk; the Raspberry Pi stays the standard box.</td></tr>
       <tr><td class="k">Networks</td><td>Two network ports supported: one on the BAS network, one on a network with internet access. This keeps the BAS network cut off from the internet, which many client IT teams ask for. One port works where the BAS network already has an internet path.</td></tr>
     </tbody>
   </table></div></div>
@@ -596,8 +596,8 @@ lon://node-12/nvoSpaceTemp</pre><p>Each driver owns its prefix. The key holds th
       <tr><td class="k">Niagara (oBIX)</td><td>HTTPS to the JACE or Supervisor with a read-only station user</td><td>Browse the station tree, then read points in batches (oBIX batch). A JACE often already sees LON, N2 and MS/TP, so this also reaches those. Histories back-fill later.</td><td>Any box or VM</td><td class="c">Built · fault suite and 24 h soak passed</td></tr>
       <tr><td class="k">Project Haystack</td><td>HTTPS to a Haystack server (SkySpark, Niagara nHaystack, others)</td><td>Tag queries; Haystack tags feed HEAPY names directly</td><td>Any box or VM</td><td class="c">Built · fault suite and 24 h soak passed</td></tr>
       <tr><td class="k">SNMP</td><td>Ethernet; v2c or v3</td><td>Templates (UPS-MIB built in) plus an optional walk that lists every number under a subtree</td><td>Any box or VM</td><td class="c">Built · fault suite and 24 h soak passed</td></tr>
-      <tr><td class="k">LON</td><td>LON/IP (IP-852) where the site has a LON router, or a USB LON network interface on the channel</td><td>Read the network database export where one exists; otherwise scan nodes and read their network variables</td><td>USB LON interface (x86 box recommended)</td><td class="c">Needs decision</td></tr>
-      <tr><td class="k">ARCNET</td><td>BACnet over ARCNET directly on the ARCNET cable, only where no BACnet router exists</td><td>Same as BACnet once connected</td><td>ARCNET card with a Linux driver, x86 box only</td><td class="c">Needs decision</td></tr>
+      <tr><td class="k">LON</td><td>LON/IP (IP-852) where the site has a LON router, or a USB LON network interface on the channel</td><td>Read the network database export where one exists; otherwise scan nodes and read their network variables</td><td>USB LON interface (x86 box recommended)</td><td class="c">Through site gateways (decided 2026-10-16)</td></tr>
+      <tr><td class="k">ARCNET</td><td>BACnet over ARCNET directly on the ARCNET cable, only where no BACnet router exists</td><td>Same as BACnet once connected</td><td>ARCNET card with a Linux driver, x86 box only</td><td class="c">Through site gateways (decided 2026-10-16)</td></tr>
     </tbody>
   </table></div></div>
   <p class="hp-callout">Before buying special hardware for LON, ARCNET or an MS/TP trunk, check whether the site already has a BACnet router, a JACE or a gateway that exposes those devices over IP. Reading through it is simpler and costs nothing extra.</p>
@@ -646,8 +646,8 @@ lon://node-12/nvoSpaceTemp</pre><p>Each driver owns its prefix. The key holds th
     <article class="ph"><div class="ph__head"><span class="ph__n">6</span><span class="ph__t">Niagara, Haystack, SNMP</span><span class="hp-pill is-pass">Soak passed</span></div>
       <ul><li>oBIX and Haystack drivers (history back-fill later)</li><li>SNMP v1, v2c and v3 with a UPS template</li></ul>
       <p class="done"><b>Done when</b>A JACE site's histories load into Trend Tracker through the box. On the simulator: fault suites and 24-hour soaks passed 2026-10-03; history back-fill and the Trend Tracker link are Phase 2.</p></article>
-    <article class="ph"><div class="ph__head"><span class="ph__n">7</span><span class="ph__t">LON and ARCNET</span><span class="hp-pill">Needs decision</span></div>
-      <ul><li>LON over IP-852 and a USB interface</li><li>BACnet over ARCNET on an x86 box</li><li>Built when a real site needs it</li></ul>
+    <article class="ph"><div class="ph__head"><span class="ph__n">7</span><span class="ph__t">LON and ARCNET</span><span class="hp-pill">Only if a site needs it</span></div>
+      <ul><li><b>Decided 2026-10-16 (Justin):</b> LON and ARCNET devices are read through what the site already has (a JACE, an iLON / SmartServer or a BACnet router) using the oBIX, Haystack and BACnet/IP drivers</li><li>Direct LON (IP-852 or USB interface) or ARCNET (card, x86 box) support is built only if a real site has one of those networks with nothing in front of it, and tested on the bench kit</li></ul>
       <p class="done"><b>Done when</b>A site with that network is read end to end.</p></article>
     <article class="ph"><div class="ph__head"><span class="ph__n">8</span><span class="ph__t">Full on-site mode, VPN</span><span class="hp-pill">Planned</span></div>
       <ul><li>Trend Tracker on the box as a destination (mode switch at install)</li><li>Offline update file for sites with no internet</li><li>Optional WireGuard VPN per site</li></ul>
@@ -693,4 +693,4 @@ lon://node-12/nvoSpaceTemp</pre><p>Each driver owns its prefix. The key holds th
     </tbody>
   </table></div></div>
 </main>
-<footer class="hp-footer"><span class="hp-slashes"></span><span>HEAPY Edge · project plan</span><span class="r hp-num">Updated 2026-10-04 · v0.3.3</span></footer>
+<footer class="hp-footer"><span class="hp-slashes"></span><span>HEAPY Edge · project plan</span><span class="r hp-num">Updated 2026-10-16 · v0.3.3</span></footer>
