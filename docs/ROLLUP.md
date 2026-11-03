@@ -1,7 +1,7 @@
 # HEAPY Edge — project rollup for a new collaborator
 
 Written 2026-10-16 by Justin Cross's Claude session. Give this to anyone (person or Claude session)
-who will work on HEAPY Edge. It assumes you have the shared HEAPY library folder `HEAPY ENGINEERING\Building Optimization - General - Documents\Tools and Concepts\HEAPY Atlas & Edge Platform` (the Building Optimization SharePoint library, synced under your user folder) and the
+who will work on HEAPY Edge. It assumes you have the shared HEAPY library folder `HEAPY ENGINEERING\Building Optimization - General - Documents\Tools and Concepts\Data Collection QC & FDD` (the Building Optimization SharePoint library, synced under your user folder) and the
 `DYS3D/Heapy-edge` repository.
 
 ## What it is
@@ -21,7 +21,7 @@ passwords and keys never shown again once saved.
 | Thing | Where |
 |---|---|
 | Repository | `https://github.com/DYS3D/Heapy-edge` (public, main branch) |
-| Working copy | `<your user folder>\HEAPY ENGINEERING\Building Optimization - General - Documents\Tools and Concepts\HEAPY Atlas & Edge Platform\Edge\HEAPYEdge` (shared Building Optimization library, synced to each PC; moved here 2026-10-30). Atlas lives beside it under `Atlas\` |
+| Working copy | `<your user folder>\HEAPY ENGINEERING\Building Optimization - General - Documents\Tools and Concepts\Data Collection QC & FDD\Edge\HEAPYEdge` (shared Building Optimization library, synced to each PC; moved here 2026-11-03). The Novant and Compass connectors, FDD, docs and tools sit beside it |
 | Project plan (HEAPY-branded HTML) | `docs/HEAPY Edge - Project Plan.html` in the repo; same file in the Claude project as `claude/HEAPY Edge - Project Plan.html`; live artifact https://claude.ai/artifact/Rmd2k4udnhAkmzicPkvFjd — **update all three on every phase change** |
 | Client-facing security sheet | `docs/HEAPY Edge - Security Sheet.html`; artifact https://claude.ai/artifact/L218hUxtHaSEB2wkkuB3Qf |
 | Status note (Claude project) | `claude/heapy-edge-status.md` — the running log of decisions, results and what's next |
@@ -103,6 +103,11 @@ Phases: 0 design, 1 core + BACnet/IP, 5 MS/TP + Modbus, 6 Niagara/Haystack/SNMP 
    whether "HEAPY Edge" stays the name.
 
 ## Working on it
+
+- **Shared-library rules**: the library root has a `CLAUDE.md` (Justin and Nick work in parallel, no git for
+  the other tools). Before editing anything under `Edge`, write `_claims/edge.claim.md` in the library root,
+  and append to `LOG-<you>.md` in the `Edge` folder when done. The repo itself is still git: commit and push
+  as below so GitHub stays the source of truth.
 
 - **Lab on a PC**: WSL2 Ubuntu as root. `apt-get install iproute2 iptables faketime build-essential
   git python3-venv`; venv with `drivers/bacnet-ip/requirements.txt`, `drivers/snmp/requirements.txt`,
