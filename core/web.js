@@ -66,6 +66,7 @@ class Web {
     const url = new URL(req.url, 'http://box');
     const p = url.pathname;
     const app = this.app;
+    if (p === '/mcp' || p.startsWith('/oauth/') || p.startsWith('/.well-known/')) { if (await app.assist.handle(req, res, url) !== false) return; }
     if (!p.startsWith('/api/')) return this.static(p, res);
     if (req.method === 'POST' && req.headers['x-edge'] !== '1') return this.json(res, 403, { error: 'missing header' });
     const secret = app.config.secret();
@@ -102,8 +103,10 @@ class Web {
     if (p === '/api/points') {
       if (req.method === 'POST') {
         const b = await this.body(req);
-        app.store.updatePoints(Array.isArray(b.changes) ? b.changes : []);
+        const changes = Array.isArray(b.changes) ? b.changes : [];
+        app.store.updatePoints(changes);
         app.scheduler.invalidate();
+        app.store.audit('setup page', 'points changed', { count: changes.length, sample: changes.slice(0, 5) });
         return this.json(res, 200, { ok: true });
       }
       return this.json(res, 200, app.store.points(Number(url.searchParams.get('device')) || undefined));
@@ -122,6 +125,14 @@ class Web {
     if (p === '/api/unpair' && req.method === 'POST') { app.link.unpair(); return this.json(res, 200, { ok: true }); }
     if (p === '/api/upload-now' && req.method === 'POST') { app.uploader.tick(true).catch(() => {}); return this.json(res, 200, { ok: true }); }
     if (p === '/api/log') return this.json(res, 200, app.logs.slice(-300));
+    if (p === '/api/assist') {
+      if (req.method === 'POST') {
+        const b = await this.body(req);
+        if (b.disconnect) return this.json(res, app.assist.disconnect(String(b.disconnect)) ? 200 : 404, { ok: true });
+        try { await app.applySettings({ assist: { mode: b.mode, token_days: b.token_days } }); } catch (e) { return this.json(res, 400, { error: e.message }); }
+      }
+      return this.json(res, 200, app.assist.summary());
+    }
     if (p === '/api/settings') {
       if (req.method === 'POST') {
         const b = await this.body(req);

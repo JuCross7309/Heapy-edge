@@ -28,3 +28,6 @@ hr{border:0;border-top:1px solid var(--hp-rule);margin:12px 0}
 textarea.mono{width:100%;font-family:var(--hp-mono);font-size:12px;margin:8px 0}
 #conn-edit{margin-top:14px}
 #conn-page{margin-top:14px}
+#assist-page{margin-top:14px}
+#assist-page h3{font-family:var(--hp-display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--hp-ink);margin:16px 0 6px}
+#assist-page .kv{margin:6px 0 14px}

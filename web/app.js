@@ -78,7 +78,7 @@
       if (tab === 'devices') await renderDevices();
       if (tab === 'points') await renderPoints();
       if (tab === 'connect') renderConnect(st);
-      if (tab === 'settings' && !settingsShown) { settingsShown = true; await renderSettings(); await renderConn(); }
+      if (tab === 'settings' && !settingsShown) { settingsShown = true; await renderSettings(); await renderConn(); await renderAssist(); }
       if (tab === 'log') await renderLog();
     } catch (e) { if (e.message !== 'signed out') console.error(e); }
   }
@@ -122,7 +122,7 @@
     devices = await api('devices');
     const f = $('#dev-filter').value.toLowerCase();
     $('#dev-rows').innerHTML = devices.filter(d => !f || `${d.name} ${d.key} ${d.vendor} ${d.model} ${d.route}`.toLowerCase().includes(f)).map(d => `<tr>
-      <td><span class="dot ${d.points ? esc(d.status) : ''}"></span>${d.points ? esc(d.status) : 'no points'}</td><td>${esc(d.name)}</td><td class="mono">${esc(d.key)}</td><td class="mono">${esc(d.route)}</td>
+      <td><span class="dot ${d.points ? esc(d.status) : ''}"></span>${d.points ? esc(d.status) : 'no points'}</td><td>${esc(d.label || d.name)}${d.label ? ` <span class="hp-muted small">(${esc(d.name)})</span>` : ''}</td><td class="mono">${esc(d.key)}</td><td class="mono">${esc(d.route)}</td>
       <td>${esc([d.vendor, d.model].filter(Boolean).join(' · '))}</td><td class="num">${d.points}</td><td class="num">${d.selected || 0}</td><td>${esc(d.last_error || '')}</td></tr>`).join('') ||
       '<tr><td colspan="8" class="hp-empty">No devices yet. Check the BAS port address in Settings, then Scan now.</td></tr>';
   }
@@ -141,14 +141,14 @@
   }
   function shownPoints() {
     const f = $('#pt-filter').value.toLowerCase();
-    return points.filter(p => !p.missing && (!f || `${p.name} ${p.description} ${p.key}`.toLowerCase().includes(f)));
+    return points.filter(p => !p.missing && (!f || `${p.name} ${p.label || ''} ${p.description} ${p.key}`.toLowerCase().includes(f)));
   }
   function drawPoints() {
     const shown = shownPoints();
     $('#pt-count').textContent = `${shown.length} shown, ${points.filter(p => p.selected).length} trended`;
     $('#pt-rows').innerHTML = shown.map(p => `<tr>
       <td><input type="checkbox" class="pt-sel" data-key="${esc(p.key)}" ${p.selected ? 'checked' : ''} aria-label="Trend ${esc(p.name)}"></td>
-      <td>${esc(p.name)}</td><td>${esc(p.description)}</td><td class="mono">${esc(p.key.split('/').pop())}</td><td>${esc(p.units || (p.states || []).join(' / '))}</td>
+      <td>${esc(p.label || p.name)}${p.label ? ` <span class="hp-muted small">(${esc(p.name)})</span>` : ''}</td><td>${esc(p.description)}</td><td class="mono">${esc(p.key.split('/').pop())}</td><td>${esc(p.units || (p.states || []).join(' / '))}</td>
       <td class="num">${ivText(p.interval_s)}${p.cov_active ? ' + COV' : ''}</td><td class="num">${p.last_v ?? '—'}</td><td>${ago(p.last_t)}</td></tr>`).join('');
   }
   $('#pt-device').addEventListener('change', renderPoints);
@@ -213,6 +213,32 @@
       $('#set-ok').textContent = 'Saved';
       renderSettings();
     } catch (err) { $('#set-err').textContent = err.message; }
+  });
+
+  // ---- AI assistants ----
+  async function renderAssist() {
+    const a = await api('assist');
+    $('#assist-url').textContent = `${location.origin}/mcp`;
+    $('#a-mode').value = a.mode; $('#a-days').value = a.token_days;
+    $('#a-rows').innerHTML = a.assistants.map(c => `<tr><td>${esc(c.name)}${c.active ? '' : ' <span class="hp-muted">(signed out)</span>'}</td><td>${ago(c.connected)}</td><td>${ago(c.last_used)}</td>
+      <td><button class="hp-btn hp-btn--sm a-off" data-id="${esc(c.id)}">Disconnect</button></td></tr>`).join('') || '<tr><td colspan="4" class="hp-empty">No assistant has connected yet.</td></tr>';
+    $('#a-audit').innerHTML = a.recent.map(e => `<tr><td>${esc(new Date(e.t).toLocaleString())}</td><td>${esc(e.who)}</td><td>${esc(e.action)}</td><td class="mono">${esc(auditText(e))}</td></tr>`).join('') || '<tr><td colspan="4" class="hp-empty">Nothing yet.</td></tr>';
+  }
+  function auditText(e) {
+    const d = e.detail || {};
+    if (e.action === 'changes applied') return (d.changes || []).map(c => `${c.point || c.device}: ` + Object.keys(c.after).map(k => `${k} ${JSON.stringify(c.before[k])} → ${JSON.stringify(c.after[k])}`).join(', ')).join('; ') + (d.scan ? '; scan started' : '') + (d.reason ? ` (${d.reason})` : '');
+    if (e.action === 'points changed') return `${d.count} point(s)`;
+    if (e.action === 'settings changed') return (d.keys || []).join(', ');
+    return d.assistant ? d.assistant + (d.scope ? ` (${d.scope.join(' ')})` : '') : '';
+  }
+  $('#assist-form').addEventListener('submit', async e => {
+    e.preventDefault(); $('#a-err').textContent = ''; $('#a-ok').textContent = '';
+    try { await api('assist', { mode: $('#a-mode').value, token_days: Number($('#a-days').value) }); $('#a-ok').textContent = 'Saved'; renderAssist(); }
+    catch (err) { $('#a-err').textContent = err.message; }
+  });
+  $('#a-rows').addEventListener('click', async e => {
+    const b = e.target.closest('.a-off'); if (!b) return;
+    await api('assist', { disconnect: b.dataset.id }); renderAssist();
   });
 
   // ---- other connections (MS/TP, Modbus, SNMP, Haystack, oBIX) ----

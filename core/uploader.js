@@ -91,10 +91,11 @@ class Uploader {
       const rows = this.store.samplesRange(pending.from, pending.to);
       const batch = {
         batch_id: pending.batch_id, box_id: this.secret().box_id || null, seq: pending.seq, sent_at: Date.now(),
-        devices: this.store.changedDevices(st.meta_t).map(d => ({ key: d.key, route: d.route, name: d.name, vendor: d.vendor, model: d.model, meta: d.meta, status: d.status })),
+        devices: this.store.changedDevices(st.meta_t).map(d => ({ key: d.key, route: d.route, name: d.name, label: d.label || null, vendor: d.vendor, model: d.model, meta: d.meta, status: d.status })),
         points: this.store.changedPoints(st.meta_t).map(p => ({
           key: p.key, device: this.store.deviceById(p.device_id)?.key, name: p.name, description: p.description, units: p.units,
           kind: p.kind, states: p.states, selected: !!p.selected, interval_s: p.interval_s, missing: !!p.missing,
+          label: p.label || null, notes: p.notes || null,
         })),
         samples: rows.map(r => [r.key, r.t, r.v]),
       };

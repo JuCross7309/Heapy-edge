@@ -12,6 +12,7 @@ const { Scheduler } = require('./scheduler');
 const { Uploader } = require('./uploader');
 const { Link } = require('./link');
 const { Web } = require('./web');
+const { Assist } = require('./assist');
 
 const VERSION = require('../package.json').version;
 
@@ -53,6 +54,7 @@ class EdgeApp {
     this.scanner = new Scanner({ store: this.store, drivers: this.drivers, settings, log, onChange: () => this.scheduler.invalidate() });
     this.uploader = new Uploader({ store: this.store, settings, secret: () => this.config.secret(), log, boxInfo: () => this.boxInfo() });
     this.link = new Link({ config: this.config, store: this.store, log, health: () => this.health(), boxInfo: () => this.boxInfo(), onConfig: c => this.applyServerConfig(c) });
+    this.assist = new Assist(this);
     this.web = new Web(this);
   }
 
@@ -132,8 +134,8 @@ class EdgeApp {
   }
 
   // Changes from the setup page. Only these parts can be changed there.
-  async applySettings(patch) {
-    const allowed = ['name', 'drivers', 'scan', 'poll', 'upload', 'buffer', 'destinations'];
+  async applySettings(patch, who = 'setup page') {
+    const allowed = ['name', 'drivers', 'scan', 'poll', 'upload', 'buffer', 'destinations', 'assist'];
     const clean = {};
     for (const k of allowed) if (patch[k] !== undefined) clean[k] = patch[k];
     if (clean.drivers) {
@@ -142,6 +144,10 @@ class EdgeApp {
         delete d.cmd; // program paths are never set from the page
         if (d.settings) d.settings = unmaskSecrets(d.settings, this.config.get().drivers[n].settings); // masked = unchanged
       }
+    }
+    if (clean.assist) {
+      const a = clean.assist;
+      clean.assist = { mode: ['off', 'read', 'edit'].includes(a.mode) ? a.mode : this.config.get().assist.mode, token_days: Math.min(365, Math.max(1, Number(a.token_days) || this.config.get().assist.token_days || 90)) };
     }
     if (clean.destinations) {
       const cur = this.config.get().destinations;
@@ -167,14 +173,15 @@ class EdgeApp {
       setTimeout(() => this.scanner.run('settings changed').then(() => this.scheduler.invalidate()).catch(() => {}), 2000);
     }
     this.log('info', `settings changed: ${Object.keys(clean).join(', ')}`);
+    this.store.audit(who, 'settings changed', { keys: Object.keys(clean), assist: clean.assist });
   }
 
   // Settings pushed by Trend Tracker at check-in: point choices, intervals, scan windows.
   async applyServerConfig(c) {
-    if (Array.isArray(c.points)) { this.store.updatePoints(c.points); this.scheduler.invalidate(); }
+    if (Array.isArray(c.points)) { this.store.updatePoints(c.points); this.scheduler.invalidate(); this.store.audit('HEAPY Atlas', 'points changed', { count: c.points.length }); }
     const patch = {};
     for (const k of ['scan', 'poll', 'upload', 'buffer', 'name']) if (c[k] !== undefined) patch[k] = c[k];
-    if (Object.keys(patch).length) await this.applySettings(patch);
+    if (Object.keys(patch).length) await this.applySettings(patch, 'HEAPY Atlas');
     if (c.scan_now) this.scanner.run('server').then(() => this.scheduler.invalidate()).catch(() => {});
   }
 

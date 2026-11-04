@@ -290,6 +290,8 @@ async function webSites() {
 
 (async () => {
   await unit();
+  console.log('AI assistants (sign-in, MCP tools, confirmed edits)');
+  await require('./assist_check').run(check);
   if (!process.argv.includes('--unit')) {
     if (haveSiteNet()) { await site(); await modbusSite(); await webSites(); }
     else console.log('Site test skipped (needs Linux root and the ip command)');

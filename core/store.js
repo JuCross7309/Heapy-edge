@@ -25,6 +25,11 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS dest_state (
      name TEXT PRIMARY KEY, last_id INTEGER DEFAULT 0, seq INTEGER DEFAULT 0, meta_t INTEGER DEFAULT 0,
      pending TEXT, last_ok INTEGER, last_error TEXT, fails INTEGER DEFAULT 0, next_try INTEGER DEFAULT 0)`,
+  // AI assistants (MCP): registered assistant apps, their tokens, and every change they made
+  `CREATE TABLE IF NOT EXISTS assist_clients (id TEXT PRIMARY KEY, name TEXT, redirect_uris TEXT, created INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS assist_tokens (hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, kind TEXT NOT NULL,
+     scope TEXT, created INTEGER, expires INTEGER, last_used INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY, t INTEGER NOT NULL, who TEXT, action TEXT, detail TEXT)`,
 ];
 
 class Store {
@@ -37,6 +42,11 @@ class Store {
     // migrations for buffers made by older versions
     const cols = new Set(this.db.prepare('PRAGMA table_info(points)').all().map(c => c.name));
     if (!cols.has('created_at')) this.db.exec('ALTER TABLE points ADD COLUMN created_at INTEGER');
+    // label: a name given on the box (setup page or an AI assistant); the BAS name stays in `name`
+    if (!cols.has('label')) this.db.exec('ALTER TABLE points ADD COLUMN label TEXT');
+    if (!cols.has('notes')) this.db.exec('ALTER TABLE points ADD COLUMN notes TEXT');
+    const dcols = new Set(this.db.prepare('PRAGMA table_info(devices)').all().map(c => c.name));
+    if (!dcols.has('label')) this.db.exec('ALTER TABLE devices ADD COLUMN label TEXT');
     this.q = {};
   }
   prep(sql) { return this.q[sql] || (this.q[sql] = this.db.prepare(sql)); }
@@ -109,19 +119,53 @@ class Store {
     return (deviceId ? this.prep(sql).all(deviceId) : this.prep(sql).all()).map(decodePoint);
   }
   activePoints() { return this.prep('SELECT * FROM points WHERE selected=1 AND missing=0').all().map(decodePoint); }
-  updatePoints(changes) {
+  updatePoints(changes) { this.tx(() => this.updatePointsNoTx(changes)); }
+  updatePointsNoTx(changes) {
     const now = Date.now();
-    this.tx(() => {
+    {
       for (const c of changes) {
         const sets = []; const args = [];
         if (c.selected !== undefined) { sets.push('selected=?'); args.push(c.selected ? 1 : 0); }
         if (c.interval_s !== undefined) { sets.push('interval_s=?'); args.push(Math.max(10, c.interval_s | 0)); }
+        if (c.label !== undefined) { sets.push('label=?'); args.push(c.label === null || c.label === '' ? null : String(c.label)); }
+        if (c.notes !== undefined) { sets.push('notes=?'); args.push(c.notes === null || c.notes === '' ? null : String(c.notes)); }
         if (!sets.length) continue;
         sets.push('updated_at=?'); args.push(now);
         this.db.prepare(`UPDATE points SET ${sets.join(',')} WHERE key=?`).run(...args, c.key);
       }
-    });
+    }
   }
+  setDeviceLabel(key, label) {
+    this.prep('UPDATE devices SET label=?,updated_at=? WHERE key=?').run(label === null || label === '' ? null : String(label), Date.now(), key);
+  }
+  pointByKey(key) { const r = this.prep('SELECT * FROM points WHERE key=?').get(key); return r && decodePoint(r); }
+  // samples of one point between two times (ms), oldest first
+  samplesOf(pointId, from, to, limit = 5000) {
+    return this.prep('SELECT t,v FROM samples WHERE p=? AND t>=? AND t<=? ORDER BY t LIMIT ?').all(pointId, from, to, limit);
+  }
+  sampleCount(pointId, from, to) { return this.prep('SELECT count(*) n, min(t) a, max(t) b FROM samples WHERE p=? AND t>=? AND t<=?').get(pointId, from, to); }
+
+  // ---- AI assistants ----
+  addAssistClient(c) { this.prep('INSERT INTO assist_clients(id,name,redirect_uris,created) VALUES(?,?,?,?)').run(c.id, c.name, JSON.stringify(c.redirect_uris), Date.now()); }
+  assistClient(id) { const r = this.prep('SELECT * FROM assist_clients WHERE id=?').get(id); return r && { ...r, redirect_uris: JSON.parse(r.redirect_uris) }; }
+  assistClients() {
+    return this.prep(`SELECT c.*, (SELECT max(last_used) FROM assist_tokens t WHERE t.client_id=c.id) last_used,
+      (SELECT count(*) FROM assist_tokens t WHERE t.client_id=c.id AND t.expires>?) tokens FROM assist_clients c ORDER BY created`).all(Date.now())
+      .map(r => ({ ...r, redirect_uris: JSON.parse(r.redirect_uris) }));
+  }
+  addAssistToken(t) { this.prep('INSERT INTO assist_tokens(hash,client_id,kind,scope,created,expires) VALUES(?,?,?,?,?,?)').run(t.hash, t.client_id, t.kind, t.scope, Date.now(), t.expires); }
+  assistToken(hash) { return this.prep('SELECT * FROM assist_tokens WHERE hash=?').get(hash); }
+  touchAssistToken(hash) { this.prep('UPDATE assist_tokens SET last_used=? WHERE hash=?').run(Date.now(), hash); }
+  deleteAssistToken(hash) { this.prep('DELETE FROM assist_tokens WHERE hash=?').run(hash); }
+  revokeAssistClient(id) { this.prep('DELETE FROM assist_tokens WHERE client_id=?').run(id); this.prep('DELETE FROM assist_clients WHERE id=?').run(id); }
+  pruneAssistTokens() { this.prep('DELETE FROM assist_tokens WHERE expires<?').run(Date.now() - 86400000); }
+
+  // ---- audit log: every change made on the box, by whom ----
+  audit(who, action, detail) {
+    this.prep('INSERT INTO audit(t,who,action,detail) VALUES(?,?,?,?)').run(Date.now(), who, action, JSON.stringify(detail || null));
+    this.prep('DELETE FROM audit WHERE id < (SELECT coalesce(max(id),0) FROM audit) - 5000').run();
+  }
+  auditLog(limit = 100) { return this.prep('SELECT * FROM audit ORDER BY id DESC LIMIT ?').all(limit).map(r => ({ ...r, detail: r.detail ? JSON.parse(r.detail) : null })); }
 
   // ---- samples ----
   addSamples(rows) { // rows: [{p, t, v}]

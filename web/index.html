@@ -127,6 +127,23 @@
       </div></div>
     </section>
 
+    <section data-page="settings" hidden id="assist-page">
+      <div class="hp-card"><div class="hp-card__head">AI assistants</div><div class="hp-card__body">
+        <p class="hp-muted small">Claude, ChatGPT, Claude Code or Codex can connect to this box and answer questions about its devices, points, values and trends. Add the box as a custom connector or MCP server with the address below; when the assistant asks, type the setup page password and click Allow. An assistant can never write to a BAS device. The box is reachable from this site's network (or a VPN into it) only.</p>
+        <div class="kv"><dt>MCP address</dt><dd id="assist-url"></dd></div>
+        <form id="assist-form" class="form grid2">
+          <label class="hp-label" for="a-mode">What assistants may do</label>
+          <select class="hp-select" id="a-mode"><option value="edit">Read, and propose changes to trending (applied only after you confirm)</option><option value="read">Read only</option><option value="off">Off</option></select>
+          <label class="hp-label" for="a-days">Sign-in lasts (days)</label><input class="hp-input" id="a-days" type="number" min="1" max="365">
+          <span></span><div><p class="err" id="a-err"></p><button class="hp-btn hp-btn--primary" type="submit">Save</button> <span class="hp-muted" id="a-ok"></span></div>
+        </form>
+        <h3>Connected assistants</h3>
+        <div class="hp-table-wrap"><table class="hp-table"><thead><tr><th>Assistant</th><th>Connected</th><th>Last used</th><th></th></tr></thead><tbody id="a-rows"></tbody></table></div>
+        <h3>Recent changes on this box</h3>
+        <div class="hp-table-wrap"><table class="hp-table"><thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead><tbody id="a-audit"></tbody></table></div>
+      </div></div>
+    </section>
+
     <section data-page="log" hidden>
       <div class="hp-card"><div class="hp-card__head">Log</div><div class="hp-card__body--flush"><pre class="log" id="log"></pre></div></div>
     </section>

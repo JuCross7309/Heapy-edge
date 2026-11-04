@@ -4,7 +4,15 @@ Read `README.md` first, then this. The project plan (`docs/HEAPY Edge - Project 
 has the phases, decisions and open items; the HEAPY Data Collection project in Claude has the
 same plan plus `claude/heapy-edge-status.md`.
 
-## Where things stand (2026-10-04, v0.3.3)
+## Where things stand (2026-11-04, v0.4.0)
+
+- **AI assistants (new, 2026-11-04):** `core/assist.js` makes every box an MCP server at `/mcp` with
+  Novant-style sign-in (OAuth 2.1, PKCE, dynamic registration, refresh, revoke) and a box setting
+  Read + confirmed edits / Read only / Off. Read tools: box_status, list_devices, list_points,
+  get_values, get_trend, search, get_settings, audit_log, box_log. Edit tools: propose_changes →
+  apply_changes(confirm:true); invalid batch rejected whole; audit table records every change.
+  Setup page: Settings → AI assistants. Test: `node tests/assist_check.js` (also in selftest).
+  Reachable on the site LAN only; Atlas re-exposes the tools fleet-wide in Phase 2.
 
 - **Every driver has passed its fault suite and its 24-hour soak.** The soak injects a fault
   every few minutes (devices off, lost/garbled replies, network loss, server errors and hangs,

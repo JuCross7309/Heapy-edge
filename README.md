@@ -33,10 +33,15 @@ Open `http://<box>:8770`, set the page password, set the BAS port address under 
 
 Docker (Pi 5, mini-PC or Linux VM): `docker compose up -d`. GitHub Actions builds the image for arm64 and amd64 on every push to main and publishes it as `ghcr.io/dys3d/heapy-edge` (`.github/workflows/image.yml`); boxes pull it from there. Host networking is required so BACnet broadcasts reach the BAS network.
 
+## AI assistants
+
+Each box is an MCP server at `http://<box>:8770/mcp`, so Claude Code, Codex, Claude or ChatGPT can answer questions about its devices, points, live values, trends and health (`core/assist.js`). Sign-in is like Novant's: add the box as a custom connector or MCP server (`claude mcp add --transport http edge http://<box>:8770/mcp`, then `/mcp` to sign in), the assistant opens the box's Allow page, you type the setup page password and click Allow, and the box issues it a revocable token (OAuth 2.1 with PKCE and dynamic client registration). Under Settings → AI assistants the box owner picks Read + confirmed edits, Read only, or Off, and can disconnect any assistant. With edits on, an assistant can propose trend on/off, intervals, labels and notes (or a scan); it must show the proposal and call `apply_changes` with `confirm: true`, an invalid batch is never partly applied, and every change is in the audit log. Nothing an assistant does can write to a BAS device. The box is reachable from the site network (or a VPN into it); reaching every site from claude.ai is what the central Atlas server adds in Phase 2 by re-exposing the same tools behind one public address.
+
 ## Test
 
 ```
 node tests/selftest.js          # needs Linux root for the simulated networks; --unit for unit checks only
+node tests/assist_check.js      # AI assistants: sign-in, MCP tools, confirmed edits (any OS)
 node tests/faults.js            # BACnet/IP fault suite (also faults-mstp.js, faults-modbus.js, faults-snmp.js, faults-haystack.js, faults-obix.js)
 node tests/soak24.js --kind modbus --hours 24 --dir /tmp/soak-modbus
 ```

@@ -65,6 +65,8 @@ function defaults(dataDir) {
     },
     upload: { every_s: 300, batch_max: 20000, checkin_every_s: 300 },
     buffer: { keep_days: 30, keep_days_unsent: 365, max_mb: 20000 },
+    // AI assistants (MCP at /mcp): off | read | edit (edit = proposed changes applied after confirmation)
+    assist: { mode: 'edit', token_days: 90 },
     destinations: [
       { name: 'server', type: 'https', url: '', enabled: false },
       { name: 'files', type: 'file', dir: path.join(dataDir, 'outbox'), enabled: false },

@@ -49,7 +49,7 @@ passwords and keys never shown again once saved.
 - **Simulators** (`sim/`) and **lab** (`tests/lab.js`): every driver has a simulated site with fault
   injection, built on Linux network namespaces, a bridge, iptables and virtual serial buses.
 
-## Where it stands (2026-10-16, v0.3.3)
+## Where it stands (2026-11-04, v0.4.0)
 
 **Every driver has passed its full fault suite and a 24-hour soak with scheduled faults.** The soak
 injects a fault every few minutes (devices off, lost/garbled/stale replies, network loss, server
@@ -69,6 +69,9 @@ All soaks: 0 gaps, 0 wrong values, 0 readings lost or duplicated box→server, 0
 stops, memory flat (96–113 MB). This meets Justin's rule of 2026-09-30: collection must be
 foolproof before anything connects to Trend Tracker. It is proven on simulators only; real
 equipment (bench kit) is still owed before the pilot.
+
+AI assistants (v0.4.0): each box is an MCP server at `/mcp` with Novant-style sign-in; read tools plus
+proposed-and-confirmed edits; audit log; never a BAS write. See README → AI assistants.
 
 Phases: 0 design, 1 core + BACnet/IP, 5 MS/TP + Modbus, 6 Niagara/Haystack/SNMP — done.
 2 central intake — next, **paused**. 3 packaging/fleet, 4 pilot, 8 full on-site mode/VPN — planned.
